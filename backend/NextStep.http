@@ -1,0 +1,190 @@
+### 🔧 Variables
+@baseUrl = http://localhost:7010/api
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjMiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJqYW1lcy5ib25kQG91dGxvb2suY29tIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiaW5kdXN0cnlfZXhwZXJ0IiwidXNlcklkIjoiMyIsImV4cCI6MTc1Njc1NjExNywiaXNzIjoiTmV4dFN0ZXBBUEkiLCJhdWQiOiJOZXh0U3RlcENsaWVudCJ9.TI0iA2Jn2ee-ePmDeKtRnXjNM-QE6ho2psS--oYilpA
+
+### 🛡️ Register - Student (Bruce Wayne)
+POST {{baseUrl}}/Auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Bruce Wayne",
+  "email": "bruce.wayne@gmail.com",
+  "password": "password123",
+  "role": "student"
+}
+
+### 🛡️ Register - Industry Expert (James Bond)
+POST {{baseUrl}}/Auth/register
+Content-Type: application/json
+
+{
+  "fullName": "James Bond",
+  "email": "james.bond@outlook.com",
+  "password": "password123",
+  "role": "industry_expert"
+}
+
+### 🔑 Login as Industry Expert (James Bond)
+POST {{baseUrl}}/Auth/login
+Content-Type: application/json
+
+{
+  "email": "james.bond@outlook.com",
+  "password": "password123"
+}
+
+
+### 🔑 Login as Bruce Wayne
+POST {{baseUrl}}/Auth/login
+Content-Type: application/json
+
+{
+  "email": "bruce.wayne@gmail.com",
+  "password": "password123"
+}
+
+### 👤 Get My Profile
+GET {{baseUrl}}/Profiles/me
+Authorization: Bearer {{token}}
+
+### ✏️ Update My Profile
+PUT {{baseUrl}}/Profiles/me
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "fullName": "Bruce Wayne Updated",
+  "avatarUrl": "/home/shinzo/Pictures/DP/0a043149938b46a85bf47c56998d90c2.jpg",
+  "university": "University of Gotham",
+  "yearOfStudy": 3,
+  "major": "Criminology & CS",
+  "skills": ["C#", "Gadgets", "Espionage"],
+  "careerInterests": ["Cybersecurity", "Justice Tech"],
+  "githubUsername": "brucewayne",
+  "linkedinUrl": "https://linkedin.com/in/brucewayne"
+}
+
+### 🌍 Get Public Profile (User ID 1)
+GET {{baseUrl}}/Profiles/1/public
+
+### 🌍 Get All Profiles
+GET {{baseUrl}}/profiles/students?page=1&pageSize=10
+Authorization: Bearer {{token}}
+
+###
+GET {{baseUrl}}/profiles/experts?page=1&pageSize=20
+Authorization: Bearer {{token}}
+
+###
+GET {{baseUrl}}/profiles/all?page=1&pageSize=10
+Authorization: Bearer {{token}}
+
+
+### 🎓 Get Student Profiles (for Industry Expert)
+GET {{baseUrl}}/Profiles/students?page=1&pageSize=10
+Authorization: Bearer {{token}}
+
+---
+
+### 📚 Courses
+
+### 📘 Get All Courses
+GET {{baseUrl}}/Courses
+Authorization: Bearer {{token}}
+
+### 📘 Get Course by ID
+GET {{baseUrl}}/Courses/1
+Authorization: Bearer {{token}}
+
+### 📝 Enroll in Course
+POST {{baseUrl}}/Courses/1/enroll
+Authorization: Bearer {{token}}
+
+### 📈 Update Course Progress
+PUT {{baseUrl}}/Courses/1/progress
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "progress": 75
+}
+
+### ✅ Mark Course as Complete
+POST {{baseUrl}}/Courses/1/complete
+Authorization: Bearer {{token}}
+
+---
+
+### 💼 Projects
+
+### 📂 Get All Projects
+GET {{baseUrl}}/Projects
+Authorization: Bearer {{token}}
+
+### 📂 Get My Projects (by User ID)
+GET {{baseUrl}}/Projects?userId=1
+Authorization: Bearer {{token}}
+
+### ➕ Create New Project
+POST {{baseUrl}}/Projects
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Gotham Surveillance System",
+  "description": "Real-time crime prediction using ML + Computer Vision",
+  "projectUrl": "https://batnet.tech",
+  "githubUrl": "https://github.com/brucewayne/gotham-surveillance",
+  "technologies": ["C#", ".NET", "OpenCV", "Azure"],
+  "imageUrls": ["https://example.com/batproject1.jpg"]
+}
+
+### 🛠️ Update Project
+PUT {{baseUrl}}/Projects/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Updated Gotham Surveillance System",
+  "description": "Improved real-time system with enhanced facial detection",
+  "projectUrl": "https://batnet.tech/v2",
+  "githubUrl": "https://github.com/brucewayne/gotham-surveillance-v2",
+  "technologies": ["C#", ".NET 8", "OpenCV", "Redis", "Azure"],
+  "imageUrls": ["https://example.com/batupdate.jpg"]
+}
+
+### ❌ Delete Project
+DELETE {{baseUrl}}/Projects/1
+Authorization: Bearer {{token}}
+
+---
+
+### 🏆 Leaderboard
+
+### 🌍 Get Global Leaderboard
+GET {{baseUrl}}/Leaderboard?page=1&pageSize=20
+Authorization: Bearer {{token}}
+
+### 🥇 Get My Rank
+GET {{baseUrl}}/Leaderboard/my-rank
+Authorization: Bearer {{token}}
+
+---
+
+### 📨 Newsletter Subscription
+
+### 📥 Subscribe
+POST {{baseUrl}}/Subscription/subscribe
+Content-Type: application/json
+
+{
+  "email": "bruce@batmail.com"
+}
+
+### 📤 Unsubscribe
+POST {{baseUrl}}/Subscription/unsubscribe
+Content-Type: application/json
+
+{
+  "email": "bruce@batmail.com"
+}
