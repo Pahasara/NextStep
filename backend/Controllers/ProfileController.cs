@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextStepBackend.Models.DTOs;
 using NextStepBackend.Services;
-using System.Security.Claims;
 
 namespace NextStepBackend.Controllers;
 
@@ -60,15 +59,35 @@ public class ProfilesController : ControllerBase
             return NotFound(result);
     }
 
+    // Updated: Allow both students and industry experts to see student profiles
     [HttpGet("students")]
     public async Task<IActionResult> GetStudentProfiles([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        // Only industry experts can access this endpoint
-        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (userRole != "industry_expert")
-            return Forbid();
-
         var result = await _profileService.GetStudentProfilesAsync(page, pageSize);
+
+        if (result.Success)
+            return Ok(result);
+        else
+            return BadRequest(result);
+    }
+
+    // New: Allow both students and industry experts to see industry expert profiles
+    [HttpGet("experts")]
+    public async Task<IActionResult> GetIndustryExpertProfiles([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        var result = await _profileService.GetIndustryExpertProfilesAsync(page, pageSize);
+
+        if (result.Success)
+            return Ok(result);
+        else
+            return BadRequest(result);
+    }
+
+    // New: Get all users (both students and industry experts) in one endpoint
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllUserProfiles([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? role = null)
+    {
+        var result = await _profileService.GetAllUserProfilesAsync(page, pageSize, role);
 
         if (result.Success)
             return Ok(result);
