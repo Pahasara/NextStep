@@ -148,7 +148,7 @@ public class ProfileService : IProfileService
         return await GetProfileAsync(userId); // Same as private for now
     }
 
-    public async Task<ApiResponse<IEnumerable<ProfileResponseDto>>> GetStudentProfilesAsync(int page, int pageSize)
+    public async Task<ApiResponse<List<ProfileResponseDto>>> GetStudentProfilesAsync(int page, int pageSize)
     {
         try
         {
@@ -178,22 +178,150 @@ public class ProfileService : IProfileService
                     LinkedinUrl = profile.LinkedinUrl,
                     PortfolioUrl = profile.PortfolioUrl,
                     Points = profile.Points,
-                    Level = profile.Level
+                    Level = profile.Level,
+                    Company = profile.Company,
+                    Position = profile.Position,
+                    Industry = profile.Industry,
+                    Experience = profile.Experience,
+                    CompanyWebsite = profile.CompanyWebsite,
+                    CompanySize = profile.CompanySize,
+                    Bio = profile.Bio
                 };
-            });
+            }).ToList();
 
-            return new ApiResponse<IEnumerable<ProfileResponseDto>>
+            return new ApiResponse<List<ProfileResponseDto>>
             {
                 Success = true,
-                Data = profileDtos
+                Data = profileDtos,
+                Message = "Student profiles retrieved successfully"
             };
         }
         catch (Exception ex)
         {
-            return new ApiResponse<IEnumerable<ProfileResponseDto>>
+            return new ApiResponse<List<ProfileResponseDto>>
             {
                 Success = false,
                 Message = "Failed to retrieve student profiles",
+                Error = ex.Message
+            };
+        }
+    }
+
+    public async Task<ApiResponse<List<ProfileResponseDto>>> GetIndustryExpertProfilesAsync(int page, int pageSize)
+    {
+        try
+        {
+            var experts = await _context.Users
+                .Where(u => u.Role == "industry_expert")
+                .Include(u => u.Profile)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var profileDtos = experts.Select(user =>
+            {
+                var profile = user.Profile ?? new Profile { UserId = user.Id };
+                return new ProfileResponseDto
+                {
+                    Id = user.Id,
+                    FullName = user.FullName,
+                    AvatarUrl = profile.AvatarUrl,
+                    University = profile.University,
+                    YearOfStudy = profile.YearOfStudy,
+                    Major = profile.Major,
+                    Skills = !string.IsNullOrEmpty(profile.Skills) ? JsonSerializer.Deserialize<List<string>>(profile.Skills) : new List<string>(),
+                    CareerInterests = !string.IsNullOrEmpty(profile.CareerInterests) ? JsonSerializer.Deserialize<List<string>>(profile.CareerInterests) : new List<string>(),
+                    GithubUsername = profile.GithubUsername,
+                    LinkedinUrl = profile.LinkedinUrl,
+                    PortfolioUrl = profile.PortfolioUrl,
+                    Points = profile.Points,
+                    Level = profile.Level,
+                    Company = profile.Company,
+                    Position = profile.Position,
+                    Industry = profile.Industry,
+                    Experience = profile.Experience,
+                    CompanyWebsite = profile.CompanyWebsite,
+                    CompanySize = profile.CompanySize,
+                    Bio = profile.Bio
+                };
+            }).ToList();
+
+            return new ApiResponse<List<ProfileResponseDto>>
+            {
+                Success = true,
+                Data = profileDtos,
+                Message = "Industry expert profiles retrieved successfully"
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<List<ProfileResponseDto>>
+            {
+                Success = false,
+                Message = "Failed to retrieve industry expert profiles",
+                Error = ex.Message
+            };
+        }
+    }
+
+    public async Task<ApiResponse<List<ProfileResponseDto>>> GetAllUserProfilesAsync(int page, int pageSize, string? role = null)
+    {
+        try
+        {
+            var query = _context.Users.Include(u => u.Profile).AsQueryable();
+
+            // Filter by role if specified
+            if (!string.IsNullOrEmpty(role))
+            {
+                query = query.Where(u => u.Role == role);
+            }
+
+            var users = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var profileDtos = users.Select(user =>
+            {
+                var profile = user.Profile ?? new Profile { UserId = user.Id };
+                return new ProfileResponseDto
+                {
+                    Id = user.Id,
+                    FullName = user.FullName,
+                    AvatarUrl = profile.AvatarUrl,
+                    University = profile.University,
+                    YearOfStudy = profile.YearOfStudy,
+                    Major = profile.Major,
+                    Skills = !string.IsNullOrEmpty(profile.Skills) ? JsonSerializer.Deserialize<List<string>>(profile.Skills) : new List<string>(),
+                    CareerInterests = !string.IsNullOrEmpty(profile.CareerInterests) ? JsonSerializer.Deserialize<List<string>>(profile.CareerInterests) : new List<string>(),
+                    GithubUsername = profile.GithubUsername,
+                    LinkedinUrl = profile.LinkedinUrl,
+                    PortfolioUrl = profile.PortfolioUrl,
+                    Points = profile.Points,
+                    Level = profile.Level,
+                    Company = profile.Company,
+                    Position = profile.Position,
+                    Industry = profile.Industry,
+                    Experience = profile.Experience,
+                    CompanyWebsite = profile.CompanyWebsite,
+                    CompanySize = profile.CompanySize,
+                    Bio = profile.Bio
+                };
+            }).ToList();
+
+            return new ApiResponse<List<ProfileResponseDto>>
+            {
+                Success = true,
+                Data = profileDtos,
+                Message = "User profiles retrieved successfully"
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<List<ProfileResponseDto>>
+            {
+                Success = false,
+                Message = "Failed to retrieve user profiles",
                 Error = ex.Message
             };
         }

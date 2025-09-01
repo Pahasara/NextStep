@@ -1,9 +1,12 @@
 // Use backend service name for container-to-container communication in Azure
 // Use Vite environment variable if set, otherwise default to backend service name
-const API_BASE_URL = "http://44.208.0.103:7010/api";
+const API_BASE_URL = "http://localhost:7010/api";
 
-console.log('API_BASE_URL:', API_BASE_URL);
-console.log('Environment variable VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL);
+console.log("API_BASE_URL:", API_BASE_URL);
+console.log(
+  "Environment variable VITE_BACKEND_URL:",
+  import.meta.env.VITE_BACKEND_URL
+);
 
 interface ApiResponse<T> {
   success: boolean;
@@ -46,11 +49,11 @@ class ApiService {
 
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
     const responseText = await response.text();
-    console.log('API Response:', {
+    console.log("API Response:", {
       status: response.status,
       statusText: response.statusText,
       url: response.url,
-      body: responseText
+      body: responseText,
     });
 
     if (!response.ok) {
@@ -58,17 +61,21 @@ class ApiService {
       try {
         errorData = JSON.parse(responseText);
       } catch {
-        errorData = { message: responseText || `HTTP error! status: ${response.status}` };
+        errorData = {
+          message: responseText || `HTTP error! status: ${response.status}`,
+        };
       }
       throw new Error(
-        errorData.message || errorData.title || `HTTP error! status: ${response.status}`
+        errorData.message ||
+          errorData.title ||
+          `HTTP error! status: ${response.status}`
       );
     }
-    
+
     try {
       return JSON.parse(responseText);
     } catch {
-      throw new Error('Invalid JSON response from server');
+      throw new Error("Invalid JSON response from server");
     }
   }
 
