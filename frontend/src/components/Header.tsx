@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Brain, User, BarChart3, LogOut, GraduationCap, Briefcase, Search, BookOpen, Trophy, Users } from "lucide-react";
+import { Menu, X, Brain, User, BarChart3, LogOut, GraduationCap, Briefcase, Search, BookOpen, Trophy, Users, Code } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -96,6 +96,11 @@ const Header = () => {
       e.preventDefault();
       smoothScrollTo(0);
     }
+    // Handle Projects navigation
+    else if (item.href === "/projects") {
+      e.preventDefault();
+      navigate("/projects");
+    }
     // For section links (starting with #), let default behavior handle it
     // For other routes, let default navigation handle it
   };
@@ -116,7 +121,7 @@ const Header = () => {
         { name: "Career Paths", href: "#careers", icon: GraduationCap },
         { name: "AI Quiz", href: "#quiz", icon: Brain },
         { name: "Learning Plans", href: "#learning", icon: BookOpen },
-        { name: "Projects", href: "#projects", icon: User },
+        { name: "Projects", href: "/projects", icon: Code },
         { name: "Leaderboard", href: "#leaderboard", icon: Trophy },
       ];
     } else {

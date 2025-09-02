@@ -59,7 +59,10 @@ const Navbar = () => {
 
   // Add Dashboard for students and Students for industry experts
   const userSpecificItems = user?.role === 'student' 
-    ? [{ name: "Dashboard", href: "/dashboard" }]
+    ? [
+        { name: "Dashboard", href: "/dashboard" },
+        { name: "Projects", href: "/projects" }
+      ]
     : user?.role === 'industry_expert' 
     ? [{ name: "Students", href: "/students" }]
     : [];
