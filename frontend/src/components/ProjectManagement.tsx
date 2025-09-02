@@ -6,8 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Plus, 
   Github, 
@@ -16,30 +14,21 @@ import {
   Trash2, 
   Upload,
   Image as ImageIcon,
-  Link,
-  Calendar,
-  Tag,
-  FolderOpen,
-  Trophy
+  Calendar
 } from "lucide-react";
-import ProjectPortfolio from "./ProjectPortfolio";
+import { useToast } from "@/hooks/use-toast";
+import apiService from "@/lib/api";
 
 interface Project {
-  id: string;
+  id: number;
   title: string;
-  description: string;
-  github_url?: string;
-  demo_url?: string;
-  technologies: string[];
-  images: string[];
-  created_at: string;
-  user_id: string;
-  career_path: string;
-  category: string;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  likes: number;
-  views: number;
-  featured: boolean;
+  description?: string;
+  projectUrl?: string;
+  githubUrl?: string;
+  technologies?: string[];
+  imageUrls?: string[];
+  createdAt: string;
+  userName: string;
 }
 
 interface ProjectManagementProps {
@@ -52,84 +41,47 @@ const ProjectManagement = ({ careerPath, onClose }: ProjectManagementProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('portfolio');
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    github_url: "",
-    demo_url: "",
+    projectUrl: "",
+    githubUrl: "",
     technologies: "",
-    images: [] as string[],
-    category: "web",
-    difficulty: "Beginner" as 'Beginner' | 'Intermediate' | 'Advanced'
+    imageUrls: [] as string[]
   });
 
+  const { toast } = useToast();
+
   useEffect(() => {
-    // Load mock data for demonstration
-    loadMockProjects();
+    // Load real projects from backend
+    loadProjects();
   }, [careerPath]);
 
-  const loadMockProjects = () => {
-    const mockProjects: Project[] = [
-      {
-        id: '1',
-        title: 'E-Commerce Platform',
-        description: 'A full-stack e-commerce platform built with React and Node.js, featuring user authentication, product catalog, shopping cart, and payment integration.',
-        github_url: 'https://github.com/user/ecommerce-platform',
-        demo_url: 'https://demo-ecommerce.vercel.app',
-        technologies: ['React', 'Node.js', 'MongoDB', 'Stripe API', 'JWT'],
-        images: [
-          'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop',
-          'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop'
-        ],
-        created_at: '2024-01-15T00:00:00Z',
-        user_id: 'mock-user',
-        career_path: careerPath,
-        category: 'fullstack',
-        difficulty: 'Advanced',
-        likes: 24,
-        views: 156,
-        featured: true
-      },
-      {
-        id: '2',
-        title: 'Task Management App',
-        description: 'A modern task management application with drag-and-drop functionality, team collaboration features, and real-time updates.',
-        github_url: 'https://github.com/user/task-manager',
-        demo_url: 'https://task-manager-demo.netlify.app',
-        technologies: ['React', 'TypeScript', 'Firebase', 'Material-UI'],
-        images: [
-          'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=300&fit=crop'
-        ],
-        created_at: '2024-01-10T00:00:00Z',
-        user_id: 'mock-user',
-        career_path: careerPath,
-        category: 'web',
-        difficulty: 'Intermediate',
-        likes: 18,
-        views: 89,
-        featured: false
-      },
-      {
-        id: '3',
-        title: 'Weather Mobile App',
-        description: 'A beautiful weather application for mobile devices with location-based forecasts, animated weather icons, and detailed meteorological data.',
-        github_url: 'https://github.com/user/weather-app',
-        technologies: ['React Native', 'Expo', 'Weather API', 'Async Storage'],
-        images: [
-          'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=400&h=300&fit=crop'
-        ],
-        created_at: '2024-01-05T00:00:00Z',
-        user_id: 'mock-user',
-        career_path: careerPath,
-        category: 'mobile',
-        difficulty: 'Beginner',
-        likes: 12,
-        views: 67,
-        featured: false
+  const loadProjects = async () => {
+    try {
+      setLoading(true);
+      // Load only current user's projects
+      const response = await apiService.getMyProjects();
+      
+      if (response.success && response.data) {
+        setProjects(response.data);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load projects",
+          variant: "destructive"
+        });
       }
-    ];
-    setProjects(mockProjects);
+    } catch (error) {
+      console.error('Error loading projects:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load projects",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -137,49 +89,99 @@ const ProjectManagement = ({ careerPath, onClose }: ProjectManagementProps) => {
     setLoading(true);
     
     try {
-      const projectData: Project = {
-        id: editingProject ? editingProject.id : Date.now().toString(),
+      const projectData = {
         title: formData.title,
-        description: formData.description,
-        github_url: formData.github_url || undefined,
-        demo_url: formData.demo_url || undefined,
+        description: formData.description || null,
+        projectUrl: formData.projectUrl || null,
+        githubUrl: formData.githubUrl || null,
         technologies: formData.technologies.split(',').map(t => t.trim()).filter(Boolean),
-        images: formData.images,
-        user_id: 'mock-user',
-        career_path: careerPath,
-        category: formData.category,
-        difficulty: formData.difficulty,
-        likes: 0,
-        views: 0,
-        featured: false,
-        created_at: new Date().toISOString()
+        imageUrls: formData.imageUrls.length > 0 ? formData.imageUrls : null
       };
 
+      let response;
       if (editingProject) {
-        setProjects(projects.map(p => p.id === editingProject.id ? projectData : p));
-        console.log('Project updated successfully');
+        response = await apiService.updateProject(editingProject.id, projectData);
       } else {
-        setProjects([projectData, ...projects]);
-        console.log('Project added successfully');
+        response = await apiService.createProject(projectData);
       }
 
-      resetForm();
-      setIsDialogOpen(false);
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: `Project ${editingProject ? 'updated' : 'created'} successfully`,
+        });
+        
+        // If creating a new project, check for achievements
+        if (!editingProject) {
+          try {
+            const achievementResponse = await apiService.checkAndAwardAchievements();
+            if (achievementResponse.success && achievementResponse.data && achievementResponse.data.length > 0) {
+              // Show achievement notifications
+              setTimeout(() => {
+                achievementResponse.data.forEach((achievement: any, index: number) => {
+                  setTimeout(() => {
+                    toast({
+                      title: "🎉 Achievement Unlocked!",
+                      description: `${achievement.title} - +${achievement.xpEarned} XP`,
+                      duration: 5000,
+                    });
+                  }, index * 1000);
+                });
+              }, 500);
+            }
+          } catch (error) {
+            console.error('Error checking achievements:', error);
+          }
+        }
+        
+        resetForm();
+        setIsDialogOpen(false);
+        loadProjects(); // Reload projects
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || `Failed to ${editingProject ? 'update' : 'create'} project`,
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Error saving project:', error);
+      toast({
+        title: "Error",
+        description: `Failed to ${editingProject ? 'update' : 'create'} project`,
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (projectId: string) => {
+  const handleDelete = async (projectId: number) => {
     if (!confirm('Are you sure you want to delete this project?')) return;
 
     try {
-      setProjects(projects.filter(p => p.id !== projectId));
-      console.log('Project deleted successfully');
+      const response = await apiService.deleteProject(projectId);
+      
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: "Project deleted successfully",
+        });
+        loadProjects(); // Reload projects
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to delete project",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Error deleting project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete project",
+        variant: "destructive"
+      });
     }
   };
 
@@ -187,13 +189,11 @@ const ProjectManagement = ({ careerPath, onClose }: ProjectManagementProps) => {
     setEditingProject(project);
     setFormData({
       title: project.title,
-      description: project.description,
-      github_url: project.github_url || "",
-      demo_url: project.demo_url || "",
-      technologies: project.technologies.join(', '),
-      images: project.images,
-      category: project.category,
-      difficulty: project.difficulty
+      description: project.description || "",
+      projectUrl: project.projectUrl || "",
+      githubUrl: project.githubUrl || "",
+      technologies: project.technologies?.join(', ') || "",
+      imageUrls: project.imageUrls || []
     });
     setIsDialogOpen(true);
   };
@@ -202,12 +202,10 @@ const ProjectManagement = ({ careerPath, onClose }: ProjectManagementProps) => {
     setFormData({
       title: "",
       description: "",
-      github_url: "",
-      demo_url: "",
+      projectUrl: "",
+      githubUrl: "",
       technologies: "",
-      images: [],
-      category: "web",
-      difficulty: "Beginner"
+      imageUrls: []
     });
     setEditingProject(null);
   };
@@ -224,14 +222,14 @@ const ProjectManagement = ({ careerPath, onClose }: ProjectManagementProps) => {
     
     setFormData({
       ...formData,
-      images: [...formData.images, ...newImages].slice(0, 3) // Max 3 images
+      imageUrls: [...formData.imageUrls, ...newImages].slice(0, 3) // Max 3 images
     });
   };
 
   const removeImage = (index: number) => {
     setFormData({
       ...formData,
-      images: formData.images.filter((_, i) => i !== index)
+      imageUrls: formData.imageUrls.filter((_, i) => i !== index)
     });
   };
 
@@ -279,62 +277,28 @@ const ProjectManagement = ({ careerPath, onClose }: ProjectManagementProps) => {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Describe your project"
                     rows={3}
-                    required
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="category">Category</Label>
-                    <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="web">Web Apps</SelectItem>
-                        <SelectItem value="mobile">Mobile Apps</SelectItem>
-                        <SelectItem value="api">APIs</SelectItem>
-                        <SelectItem value="frontend">Frontend</SelectItem>
-                        <SelectItem value="fullstack">Full Stack</SelectItem>
-                        <SelectItem value="library">Libraries</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="difficulty">Difficulty</Label>
-                    <Select value={formData.difficulty} onValueChange={(value: any) => setFormData({ ...formData, difficulty: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Beginner">Beginner</SelectItem>
-                        <SelectItem value="Intermediate">Intermediate</SelectItem>
-                        <SelectItem value="Advanced">Advanced</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="github_url">GitHub URL</Label>
+                    <Label htmlFor="githubUrl">GitHub URL</Label>
                     <Input
-                      id="github_url"
+                      id="githubUrl"
                       type="url"
-                      value={formData.github_url}
-                      onChange={(e) => setFormData({ ...formData, github_url: e.target.value })}
+                      value={formData.githubUrl}
+                      onChange={(e) => setFormData({ ...formData, githubUrl: e.target.value })}
                       placeholder="https://github.com/username/repo"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="demo_url">Demo URL</Label>
+                    <Label htmlFor="projectUrl">Demo URL</Label>
                     <Input
-                      id="demo_url"
+                      id="projectUrl"
                       type="url"
-                      value={formData.demo_url}
-                      onChange={(e) => setFormData({ ...formData, demo_url: e.target.value })}
+                      value={formData.projectUrl}
+                      onChange={(e) => setFormData({ ...formData, projectUrl: e.target.value })}
                       placeholder="https://your-demo.com"
                     />
                   </div>
@@ -370,9 +334,9 @@ const ProjectManagement = ({ careerPath, onClose }: ProjectManagementProps) => {
                       </Label>
                     </div>
                     
-                    {formData.images.length > 0 && (
+                    {formData.imageUrls.length > 0 && (
                       <div className="grid grid-cols-3 gap-2">
-                        {formData.images.map((image, index) => (
+                        {formData.imageUrls.map((image, index) => (
                           <div key={index} className="relative group">
                             <img
                               src={image}
@@ -419,80 +383,62 @@ const ProjectManagement = ({ careerPath, onClose }: ProjectManagementProps) => {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="portfolio">
-            <FolderOpen className="w-4 h-4 mr-2" />
-            Portfolio View
-          </TabsTrigger>
-          <TabsTrigger value="manage">
-            <Trophy className="w-4 h-4 mr-2" />
-            Manage Projects
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="portfolio" className="space-y-6">
-          <ProjectPortfolio 
-            projects={projects}
-            careerPath={careerPath}
-            showFilters={true}
-          />
-        </TabsContent>
-
-        <TabsContent value="manage" className="space-y-6">
-          {/* Simple Grid View for Management */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <Card key={project.id} className="glass-card group hover:scale-105 transition-all duration-300">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg line-clamp-1">{project.title}</CardTitle>
-                    <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(project)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(project.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+      <div className="space-y-6">
+        {/* Simple Grid View for Management */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {projects.map((project) => (
+            <Card key={project.id} className="glass-card group hover:scale-105 transition-all duration-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-lg line-clamp-1">{project.title}</CardTitle>
+                  <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(project)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(project.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
-                </CardHeader>
+                </div>
+              </CardHeader>
                 
                 <CardContent className="space-y-4">
                   {/* Project Images */}
-                  {project.images.length > 0 && (
+                  {project.imageUrls && project.imageUrls.length > 0 && (
                     <div className="relative">
                       <img
-                        src={project.images[0]}
+                        src={project.imageUrls[0]}
                         alt={project.title}
                         className="w-full h-32 object-cover rounded"
                       />
-                      {project.images.length > 1 && (
+                      {project.imageUrls.length > 1 && (
                         <Badge 
                           variant="secondary" 
                           className="absolute top-2 right-2"
                         >
-                          +{project.images.length - 1}
+                          +{project.imageUrls.length - 1}
                         </Badge>
                       )}
                     </div>
                   )}
 
                   {/* Description */}
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {project.description}
-                  </p>
+                  {project.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {project.description}
+                    </p>
+                  )}
 
                   {/* Technologies */}
-                  {project.technologies.length > 0 && (
+                  {project.technologies && project.technologies.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {project.technologies.slice(0, 3).map((tech, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
@@ -509,17 +455,17 @@ const ProjectManagement = ({ careerPath, onClose }: ProjectManagementProps) => {
 
                   {/* Links */}
                   <div className="flex space-x-2">
-                    {project.github_url && (
+                    {project.githubUrl && (
                       <Button variant="outline" size="sm" asChild>
-                        <a href={project.github_url} target="_blank" rel="noopener noreferrer">
+                        <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
                           <Github className="w-4 h-4 mr-1" />
                           Code
                         </a>
                       </Button>
                     )}
-                    {project.demo_url && (
+                    {project.projectUrl && (
                       <Button variant="outline" size="sm" asChild>
-                        <a href={project.demo_url} target="_blank" rel="noopener noreferrer">
+                        <a href={project.projectUrl} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="w-4 h-4 mr-1" />
                           Demo
                         </a>
@@ -530,7 +476,7 @@ const ProjectManagement = ({ careerPath, onClose }: ProjectManagementProps) => {
                   {/* Date */}
                   <div className="flex items-center text-xs text-muted-foreground">
                     <Calendar className="w-3 h-3 mr-1" />
-                    {new Date(project.created_at).toLocaleDateString()}
+                    {new Date(project.createdAt).toLocaleDateString()}
                   </div>
                 </CardContent>
               </Card>
@@ -552,8 +498,7 @@ const ProjectManagement = ({ careerPath, onClose }: ProjectManagementProps) => {
               </Card>
             )}
           </div>
-        </TabsContent>
-      </Tabs>
+      </div>
     </div>
   );
 };

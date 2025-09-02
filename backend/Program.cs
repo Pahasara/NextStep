@@ -45,6 +45,8 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<IRatingService, RatingService>();
+builder.Services.AddScoped<IAchievementService, AchievementService>();
 
 // Configure CORS
 builder.Services.AddCors(options =>

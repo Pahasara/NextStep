@@ -30,6 +30,21 @@ public class LoginDto
     public string Password { get; set; } = string.Empty;
 }
 
+public class CreateRatingRequest
+{
+    public int StudentUserId { get; set; }
+    public int Rating { get; set; } // 1-5
+    public string? Comment { get; set; }
+    public string? Category { get; set; } // e.g., "Technical Skills", "Communication", "Problem Solving"
+}
+
+public class UpdateRatingRequest
+{
+    public int Rating { get; set; } // 1-5
+    public string? Comment { get; set; }
+    public string? Category { get; set; }
+}
+
 public class LoginResponseDto
 {
     public string Token { get; set; } = string.Empty;

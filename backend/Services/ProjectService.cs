@@ -9,10 +9,14 @@ namespace NextStepBackend.Services;
 public class ProjectService : IProjectService
 {
     private readonly NextStepDbContext _context;
+    private readonly ILeaderboardService _leaderboardService;
+    private readonly IAchievementService _achievementService;
 
-    public ProjectService(NextStepDbContext context)
+    public ProjectService(NextStepDbContext context, ILeaderboardService leaderboardService, IAchievementService achievementService)
     {
         _context = context;
+        _leaderboardService = leaderboardService;
+        _achievementService = achievementService;
     }
 
     public async Task<ApiResponse<IEnumerable<ProjectDto>>> GetProjectsAsync(int? userId = null)
@@ -51,6 +55,45 @@ public class ProjectService : IProjectService
             {
                 Success = false,
                 Message = "Failed to retrieve projects",
+                Error = ex.Message
+            };
+        }
+    }
+
+    public async Task<ApiResponse<IEnumerable<ProjectDto>>> GetAllProjectsAsync()
+    {
+        try
+        {
+            var projects = await _context.Projects
+                .Include(p => p.User)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            var projectDtos = projects.Select(p => new ProjectDto
+            {
+                Id = p.Id,
+                Title = p.Title,
+                Description = p.Description,
+                ProjectUrl = p.ProjectUrl,
+                GithubUrl = p.GithubUrl,
+                Technologies = !string.IsNullOrEmpty(p.Technologies) ? JsonSerializer.Deserialize<List<string>>(p.Technologies) : new List<string>(),
+                ImageUrls = !string.IsNullOrEmpty(p.ImageUrls) ? JsonSerializer.Deserialize<List<string>>(p.ImageUrls) : new List<string>(),
+                CreatedAt = p.CreatedAt,
+                UserName = p.User.FullName
+            });
+
+            return new ApiResponse<IEnumerable<ProjectDto>>
+            {
+                Success = true,
+                Data = projectDtos
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<IEnumerable<ProjectDto>>
+            {
+                Success = false,
+                Message = "Failed to retrieve all projects",
                 Error = ex.Message
             };
         }
@@ -103,6 +146,19 @@ public class ProjectService : IProjectService
         }
     }
 
+    public async Task<int?> GetProjectOwnerAsync(int projectId)
+    {
+        try
+        {
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
+            return project?.UserId;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public async Task<ApiResponse<ProjectDto>> CreateProjectAsync(int userId, ProjectDto projectDto)
     {
         try
@@ -119,6 +175,35 @@ public class ProjectService : IProjectService
             };
 
             _context.Projects.Add(project);
+            await _context.SaveChangesAsync();
+
+            // Update user profile project count
+            var profile = await _context.Profiles.FirstOrDefaultAsync(p => p.UserId == userId);
+            if (profile != null)
+            {
+                profile.ProjectsSubmitted++;
+                profile.LastActivityDate = DateTime.UtcNow;
+                profile.UpdatedAt = DateTime.UtcNow;
+            }
+
+            // Log the activity for leaderboard
+            var metadata = JsonSerializer.Serialize(new 
+            { 
+                ProjectId = project.Id, 
+                ProjectTitle = project.Title,
+                Technologies = projectDto.Technologies?.Count ?? 0
+            });
+
+            await _leaderboardService.LogActivityAsync(
+                userId, 
+                "project_submitted", 
+                $"Submitted project: {project.Title}", 
+                50, // Points for project submission
+                metadata);
+
+            // Check and award achievements after project creation
+            await _achievementService.CheckAndAwardUserAchievementsAsync(userId);
+
             await _context.SaveChangesAsync();
 
             return await GetProjectAsync(project.Id);

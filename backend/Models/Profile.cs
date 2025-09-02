@@ -37,6 +37,19 @@ public class Profile
 
     public int Level { get; set; } = 1;
 
+    // Leaderboard and gamification fields
+    public int Streak { get; set; } = 0;
+    public DateTime? LastActivityDate { get; set; }
+    public int CoursesCompleted { get; set; } = 0;
+    public int ProjectsSubmitted { get; set; } = 0;
+    public int AchievementsEarned { get; set; } = 0;
+    public int LearningHours { get; set; } = 0;
+    public int MonthlyGrowthPercentage { get; set; } = 0;
+    public int CompetitionWins { get; set; } = 0;
+    public double MentorshipRating { get; set; } = 0.0;
+    public int ProfileViews { get; set; } = 0;
+    public int SkillsAcquired { get; set; } = 0;
+
     // Industry expert specific fields
     [StringLength(100)]
     public string? Company { get; set; }

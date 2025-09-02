@@ -1,6 +1,11 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import apiService from "@/lib/api";
+import { calculateLevel } from "@/lib/levelSystem";
 import { 
   BookOpen, 
   Play, 
@@ -13,35 +18,106 @@ import {
 } from "lucide-react";
 
 const LearningSection = () => {
-  const learningStats = [
-    { icon: BookOpen, label: "Courses", value: "150+", color: "text-blue-400" },
-    { icon: Play, label: "Video Hours", value: "2,500+", color: "text-green-400" },
-    { icon: FileText, label: "Resources", value: "800+", color: "text-purple-400" },
-    { icon: Award, label: "Certificates", value: "50+", color: "text-yellow-400" }
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch user profile
+      const profileResponse = await apiService.getMyProfile();
+      if (profileResponse.success) {
+        setUserProfile(profileResponse.data);
+      }
+
+      // Fetch available courses
+      const coursesResponse = await apiService.getCourses();
+      if (coursesResponse.success) {
+        setCourses(coursesResponse.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching learning data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate real learning stats from user profile
+  const learningStats = userProfile ? [
+    { icon: BookOpen, label: "Courses", value: userProfile.coursesCompleted?.toString() || "0", color: "text-blue-400" },
+    { icon: Play, label: "Learning Hours", value: userProfile.learningHours?.toString() || "0", color: "text-green-400" },
+    { icon: FileText, label: "Projects", value: userProfile.projectsSubmitted?.toString() || "0", color: "text-purple-400" },
+    { icon: Award, label: "Achievements", value: userProfile.achievementsEarned?.toString() || "0", color: "text-yellow-400" }
+  ] : [
+    { icon: BookOpen, label: "Courses", value: "0", color: "text-blue-400" },
+    { icon: Play, label: "Learning Hours", value: "0", color: "text-green-400" },  
+    { icon: FileText, label: "Projects", value: "0", color: "text-purple-400" },
+    { icon: Award, label: "Achievements", value: "0", color: "text-yellow-400" }
   ];
 
-  const learningPath = [
+  // Create dynamic learning path based on user progress
+  const learningPath = userProfile ? [
     {
       phase: "Foundation",
-      progress: 100,
+      progress: Math.min(100, (userProfile.coursesCompleted || 0) >= 3 ? 100 : ((userProfile.coursesCompleted || 0) / 3) * 100),
       modules: [
-        { name: "Programming Basics", completed: true, duration: "2 weeks" },
-        { name: "Web Development Intro", completed: true, duration: "3 weeks" },
-        { name: "Database Fundamentals", completed: true, duration: "2 weeks" }
+        { name: "Programming Basics", completed: (userProfile.coursesCompleted || 0) >= 1, duration: "2 weeks" },
+        { name: "Web Development Intro", completed: (userProfile.coursesCompleted || 0) >= 2, duration: "3 weeks" },
+        { name: "Database Fundamentals", completed: (userProfile.coursesCompleted || 0) >= 3, duration: "2 weeks" }
       ]
     },
     {
       phase: "Intermediate",
-      progress: 60,
+      progress: Math.min(100, (userProfile.coursesCompleted || 0) >= 8 ? 100 : Math.max(0, ((userProfile.coursesCompleted || 0) - 3) / 5) * 100),
       modules: [
-        { name: "Advanced JavaScript", completed: true, duration: "4 weeks" },
-        { name: "React Framework", completed: true, duration: "5 weeks" },
+        { name: "Advanced JavaScript", completed: (userProfile.coursesCompleted || 0) >= 4, duration: "4 weeks" },
+        { name: "React Framework", completed: (userProfile.coursesCompleted || 0) >= 6, duration: "5 weeks" },
+        { name: "Backend Development", completed: (userProfile.coursesCompleted || 0) >= 8, duration: "4 weeks" }
+      ]
+    },
+    {
+      phase: "Advanced",
+      progress: Math.min(100, Math.max(0, ((userProfile.coursesCompleted || 0) - 8) / 5) * 100),
+      modules: [
+        { name: "System Design", completed: (userProfile.coursesCompleted || 0) >= 10, duration: "6 weeks" },
+        { name: "DevOps Practices", completed: (userProfile.coursesCompleted || 0) >= 12, duration: "5 weeks" },
+        { name: "Cloud Architecture", completed: (userProfile.coursesCompleted || 0) >= 15, duration: "4 weeks" }
+      ]
+    }
+  ] : [
+    {
+      phase: "Foundation",
+      progress: 0,
+      modules: [
+        { name: "Programming Basics", completed: false, duration: "2 weeks" },
+        { name: "Web Development Intro", completed: false, duration: "3 weeks" },
+        { name: "Database Fundamentals", completed: false, duration: "2 weeks" }
+      ]
+    },
+    {
+      phase: "Intermediate",
+      progress: 0,
+      modules: [
+        { name: "Advanced JavaScript", completed: false, duration: "4 weeks" },
+        { name: "React Framework", completed: false, duration: "5 weeks" },
         { name: "Backend Development", completed: false, duration: "4 weeks" }
       ]
     },
     {
       phase: "Advanced",
-      progress: 20,
+      progress: 0,
       modules: [
         { name: "System Design", completed: false, duration: "6 weeks" },
         { name: "DevOps Practices", completed: false, duration: "5 weeks" },
@@ -50,33 +126,54 @@ const LearningSection = () => {
     }
   ];
 
-  const featuredCourses = [
+  // Use real courses from API or fallback to featured courses
+  const featuredCourses = courses.length > 0 ? courses.slice(0, 3).map(course => ({
+    title: course.title,
+    instructor: "NextStep Instructor",
+    rating: 4.8,
+    students: 1200,
+    duration: `${course.estimatedHours || 8} weeks`,
+    image: course.thumbnailUrl || "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=300&h=200&fit=crop",
+    level: course.level || "Intermediate",
+    isEnrolled: course.isEnrolled || false,
+    isCompleted: course.isCompleted || false,
+    progress: course.progress || 0
+  })) : [
     {
       title: "Full-Stack Web Development",
-      instructor: "Prof. Kasun Perera",
+      instructor: "NextStep Expert",
       rating: 4.9,
       students: 1250,
       duration: "12 weeks",
       image: "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=300&h=200&fit=crop",
-      level: "Intermediate"
+      level: "Intermediate",
+      isEnrolled: false,
+      isCompleted: false,
+      progress: 0
     },
     {
       title: "Machine Learning Fundamentals",
-      instructor: "Dr. Sanduni Silva", 
+      instructor: "AI Specialist", 
       rating: 4.8,
       students: 890,
       duration: "10 weeks",
       image: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=300&h=200&fit=crop",
-      level: "Advanced"
+      level: "Advanced",
+      isEnrolled: false,
+      isCompleted: false,
+      progress: 0
     },
     {
       title: "Cybersecurity Essentials",
-      instructor: "Eng. Nuwan Fernando",
+      instructor: "Security Expert",
       rating: 4.9,
       students: 1100,
       duration: "8 weeks", 
       image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=300&h=200&fit=crop",
-      level: "Beginner"
+      level: "Beginner",
+      isEnrolled: false,
+      isCompleted: false,
+      progress: 0
     }
   ];
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import Leaderboard from "@/components/Leaderboard";
+import RealTimeLeaderboard from "@/components/RealTimeLeaderboard";
+import StudentRating from "@/components/StudentRating";
+import { useToast } from "@/hooks/use-toast";
+import API from "@/lib/api";
 import { 
   Search, 
   Filter, 
@@ -29,8 +32,41 @@ import {
   Star,
   Eye,
   Users,
-  BarChart3
+  BarChart3,
+  RefreshCw,
+  Loader2
 } from "lucide-react";
+
+// API Response interface that matches backend ProfileResponseDto
+interface ApiStudent {
+  id: number;
+  fullName: string;
+  avatarUrl?: string;
+  university?: string;
+  yearOfStudy?: string;
+  major?: string;
+  skills: string[];
+  careerInterests: string[];
+  githubUsername?: string;
+  linkedinUrl?: string;
+  portfolioUrl?: string;
+  points: number;
+  level: number;
+  streak: number;
+  coursesCompleted: number;
+  projectsSubmitted: number;
+  achievementsEarned: number;
+  learningHours: number;
+  monthlyGrowthPercentage: number;
+  competitionWins: number;
+  mentorshipRating: number;
+  profileViews: number;
+  skillsAcquired: number;
+  lastActivityDate?: string;
+  bio?: string;
+  phoneNumber?: string;
+  gpa?: number;
+}
 
 // Enhanced interfaces for student data
 interface SkillProgress {
@@ -51,15 +87,15 @@ interface Achievement {
 }
 
 interface Project {
-  id: string;
+  id: number;
   title: string;
-  description: string;
-  technologies: string[];
+  description?: string;
+  technologies?: string[];
   githubUrl?: string;
-  liveUrl?: string;
-  image?: string;
-  completedDate: string;
-  complexity: 'beginner' | 'intermediate' | 'advanced';
+  projectUrl?: string;
+  imageUrls?: string[];
+  createdAt: string;
+  userName: string;
 }
 
 interface LearningProgress {
@@ -105,296 +141,214 @@ interface Student {
   profileCompleteness: number;
 }
 
-// Mock student data with comprehensive profiles
-const mockStudents: Student[] = [
-  {
-    id: "1",
-    fullName: "Kavitha Perera",
-    email: "kavitha.perera@uoc.lk",
-    phone: "+94 77 123 4567",
-    bio: "Passionate full-stack developer with a keen interest in AI and machine learning. Currently pursuing my final year in Computer Science with a focus on modern web technologies and data science.",
-    avatar: "/api/placeholder/150/150",
-    location: "Colombo, Sri Lanka",
-    university: "University of Colombo",
-    degree: "Computer Science",
-    yearOfStudy: "4th Year",
-    careerPath: "Full Stack Development",
-    gpa: 3.8,
-    skills: [
-      { name: "React", level: 90, category: 'programming', certifications: ["React Developer Certification"] },
-      { name: "Node.js", level: 85, category: 'programming', certifications: [] },
-      { name: "Python", level: 80, category: 'programming', certifications: ["Python Institute PCAP"] },
-      { name: "TypeScript", level: 75, category: 'programming', certifications: [] },
-      { name: "MongoDB", level: 70, category: 'data', certifications: [] },
-      { name: "UI/UX Design", level: 65, category: 'design', certifications: ["Google UX Design Certificate"] },
-      { name: "Team Leadership", level: 80, category: 'soft', certifications: [] },
-      { name: "Problem Solving", level: 90, category: 'soft', certifications: [] }
-    ],
-    achievements: [
-      {
-        id: "a1",
-        title: "Best Final Year Project",
-        description: "Awarded for developing an AI-powered learning management system",
-        date: "2024-12-15",
-        type: 'award',
-        issuer: "University of Colombo",
-        credentialUrl: "#"
-      },
-      {
-        id: "a2",
-        title: "AWS Solutions Architect Associate",
-        description: "Cloud computing certification",
-        date: "2024-10-20",
-        type: 'certification',
-        issuer: "Amazon Web Services",
-        credentialUrl: "#"
-      },
-      {
-        id: "a3",
-        title: "Hackathon Winner",
-        description: "1st place in Sri Lanka Tech Challenge 2024",
-        date: "2024-08-15",
-        type: 'hackathon',
-        issuer: "Tech Lanka Foundation",
-        credentialUrl: "#"
-      }
-    ],
-    projects: [
-      {
-        id: "p1",
-        title: "EduTrack - Learning Management System",
-        description: "A comprehensive LMS with AI-powered personalized learning paths, real-time collaboration, and analytics dashboard",
-        technologies: ["React", "Node.js", "MongoDB", "Socket.io", "TensorFlow.js"],
-        githubUrl: "https://github.com/kavitha/edutrack",
-        liveUrl: "https://edutrack-demo.vercel.app",
-        image: "/api/placeholder/300/200",
-        completedDate: "2024-12-10",
-        complexity: 'advanced'
-      },
-      {
-        id: "p2",
-        title: "TaskMaster Pro",
-        description: "A sophisticated project management tool with Kanban boards, time tracking, and team collaboration features",
-        technologies: ["React", "Express.js", "PostgreSQL", "Redis"],
-        githubUrl: "https://github.com/kavitha/taskmaster",
-        liveUrl: "https://taskmaster-pro.netlify.app",
-        image: "/api/placeholder/300/200",
-        completedDate: "2024-09-20",
-        complexity: 'intermediate'
-      }
-    ],
-    learningProgress: {
-      totalHours: 1250,
-      completedCourses: 25,
-      inProgressCourses: 3,
-      skillsAcquired: 15,
-      projectsCompleted: 12,
-      certificationsEarned: 8,
-      monthlyProgress: [
-        { month: "Jan", hours: 80 },
-        { month: "Feb", hours: 95 },
-        { month: "Mar", hours: 110 },
-        { month: "Apr", hours: 120 },
-        { month: "May", hours: 105 },
-        { month: "Jun", hours: 130 }
-      ],
-      learningStreak: 45,
-      lastActiveDate: "2024-12-20"
-    },
-    linkedinUrl: "https://linkedin.com/in/kavitha-perera",
-    githubUrl: "https://github.com/kavitha-perera",
-    portfolioUrl: "https://kavitha-portfolio.dev",
-    resumeUrl: "/resumes/kavitha-perera.pdf",
-    joinedDate: "2024-01-15",
-    lastActive: "2024-12-20",
-    isAvailableForWork: true,
-    preferredJobTypes: ["Full-time", "Internship", "Remote"],
-    expectedSalary: "LKR 80,000 - 120,000",
-    rating: 4.9,
-    totalViews: 342,
-    profileCompleteness: 95
-  },
-  {
-    id: "2",
-    fullName: "Dinesh Silva",
-    email: "dinesh.silva@sliit.lk",
-    phone: "+94 71 987 6543",
-    bio: "Data science enthusiast with strong analytical skills and experience in machine learning. Passionate about extracting insights from complex datasets and building predictive models.",
-    avatar: "/api/placeholder/150/150",
-    location: "Kandy, Sri Lanka",
-    university: "SLIIT",
-    degree: "Data Science",
-    yearOfStudy: "3rd Year",
-    careerPath: "Data Science & Analytics",
-    gpa: 3.9,
-    skills: [
-      { name: "Python", level: 95, category: 'programming', certifications: ["Python Institute PCEP", "PCAP"] },
-      { name: "R", level: 80, category: 'programming', certifications: [] },
-      { name: "Machine Learning", level: 85, category: 'data', certifications: ["Google ML Crash Course"] },
-      { name: "SQL", level: 90, category: 'data', certifications: ["MySQL Certification"] },
-      { name: "Tableau", level: 75, category: 'data', certifications: ["Tableau Desktop Specialist"] },
-      { name: "TensorFlow", level: 80, category: 'data', certifications: [] },
-      { name: "Statistical Analysis", level: 85, category: 'data', certifications: [] },
-      { name: "Communication", level: 85, category: 'soft', certifications: [] }
-    ],
-    achievements: [
-      {
-        id: "a4",
-        title: "Google Data Analytics Certificate",
-        description: "Professional certificate in data analytics",
-        date: "2024-11-30",
-        type: 'certification',
-        issuer: "Google",
-        credentialUrl: "#"
-      },
-      {
-        id: "a5",
-        title: "Data Science Competition Winner",
-        description: "2nd place in National Data Science Challenge",
-        date: "2024-09-10",
-        type: 'competition',
-        issuer: "Data Science Society Sri Lanka",
-        credentialUrl: "#"
-      }
-    ],
-    projects: [
-      {
-        id: "p3",
-        title: "COVID-19 Prediction Model",
-        description: "Machine learning model to predict COVID-19 spread patterns using epidemiological data",
-        technologies: ["Python", "Scikit-learn", "Pandas", "Matplotlib", "Streamlit"],
-        githubUrl: "https://github.com/dinesh/covid-prediction",
-        liveUrl: "https://covid-ml-model.streamlit.app",
-        image: "/api/placeholder/300/200",
-        completedDate: "2024-11-15",
-        complexity: 'advanced'
-      }
-    ],
-    learningProgress: {
-      totalHours: 980,
-      completedCourses: 18,
-      inProgressCourses: 4,
-      skillsAcquired: 12,
-      projectsCompleted: 8,
-      certificationsEarned: 6,
-      monthlyProgress: [
-        { month: "Jan", hours: 70 },
-        { month: "Feb", hours: 85 },
-        { month: "Mar", hours: 90 },
-        { month: "Apr", hours: 100 },
-        { month: "May", hours: 95 },
-        { month: "Jun", hours: 110 }
-      ],
-      learningStreak: 32,
-      lastActiveDate: "2024-12-19"
-    },
-    linkedinUrl: "https://linkedin.com/in/dinesh-silva",
-    githubUrl: "https://github.com/dinesh-silva",
-    portfolioUrl: "https://dinesh-ds.portfolio.dev",
-    joinedDate: "2024-02-20",
-    lastActive: "2024-12-19",
-    isAvailableForWork: true,
-    preferredJobTypes: ["Full-time", "Part-time", "Project-based"],
-    expectedSalary: "LKR 70,000 - 100,000",
-    rating: 4.7,
-    totalViews: 198,
-    profileCompleteness: 88
-  },
-  {
-    id: "3",
-    fullName: "Amara Wickramasinghe",
-    email: "amara.w@moratuwa.ac.lk",
-    phone: "+94 76 555 7890",
-    bio: "Creative UI/UX designer and front-end developer with a passion for creating beautiful, user-centered digital experiences. Specializing in modern design principles and accessibility.",
-    avatar: "/api/placeholder/150/150",
-    location: "Moratuwa, Sri Lanka",
-    university: "University of Moratuwa",
-    degree: "Computer Science & Engineering",
-    yearOfStudy: "2nd Year",
-    careerPath: "UI/UX Design",
-    gpa: 3.7,
-    skills: [
-      { name: "Figma", level: 95, category: 'design', certifications: ["Figma Academy Certificate"] },
-      { name: "Adobe XD", level: 85, category: 'design', certifications: [] },
-      { name: "React", level: 70, category: 'programming', certifications: [] },
-      { name: "HTML/CSS", level: 90, category: 'programming', certifications: [] },
-      { name: "JavaScript", level: 75, category: 'programming', certifications: [] },
-      { name: "User Research", level: 80, category: 'design', certifications: ["UX Research Certificate"] },
-      { name: "Prototyping", level: 90, category: 'design', certifications: [] },
-      { name: "Creative Thinking", level: 95, category: 'soft', certifications: [] }
-    ],
-    achievements: [
-      {
-        id: "a6",
-        title: "Best Design Portfolio",
-        description: "University award for outstanding design portfolio",
-        date: "2024-10-05",
-        type: 'award',
-        issuer: "University of Moratuwa",
-        credentialUrl: "#"
-      },
-      {
-        id: "a7",
-        title: "Google UX Design Certificate",
-        description: "Professional certificate in UX design",
-        date: "2024-08-20",
-        type: 'certification',
-        issuer: "Google",
-        credentialUrl: "#"
-      }
-    ],
-    projects: [
-      {
-        id: "p4",
-        title: "MediCare Mobile App",
-        description: "Healthcare app redesign focusing on elderly users with accessibility features",
-        technologies: ["Figma", "React Native", "User Testing"],
-        githubUrl: "https://github.com/amara/medicare-app",
-        liveUrl: "https://medicare-prototype.figma.com",
-        image: "/api/placeholder/300/200",
-        completedDate: "2024-10-30",
-        complexity: 'intermediate'
-      }
-    ],
-    learningProgress: {
-      totalHours: 756,
-      completedCourses: 14,
-      inProgressCourses: 2,
-      skillsAcquired: 10,
-      projectsCompleted: 6,
-      certificationsEarned: 4,
-      monthlyProgress: [
-        { month: "Jan", hours: 60 },
-        { month: "Feb", hours: 75 },
-        { month: "Mar", hours: 80 },
-        { month: "Apr", hours: 85 },
-        { month: "May", hours: 90 },
-        { month: "Jun", hours: 95 }
-      ],
-      learningStreak: 28,
-      lastActiveDate: "2024-12-18"
-    },
-    linkedinUrl: "https://linkedin.com/in/amara-wickramasinghe",
-    githubUrl: "https://github.com/amara-w",
-    portfolioUrl: "https://amara-design.portfolio.dev",
-    joinedDate: "2024-03-10",
-    lastActive: "2024-12-18",
-    isAvailableForWork: false,
-    preferredJobTypes: ["Internship", "Part-time"],
-    rating: 4.8,
-    totalViews: 267,
-    profileCompleteness: 92
-  }
-];
-
 const StudentBrowser = () => {
-  const [students, setStudents] = useState<Student[]>(mockStudents);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [apiStudents, setApiStudents] = useState<ApiStudent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCareerPath, setFilterCareerPath] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>("all");
   const [filterLocation, setFilterLocation] = useState<string>("all");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [studentProjects, setStudentProjects] = useState<Project[]>([]);
+  const [allProjects, setAllProjects] = useState<Project[]>([]);
   const [activeView, setActiveView] = useState<string>("browse");
+  const [studentRatings, setStudentRatings] = useState<Record<string, number>>({});
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const { toast } = useToast();
+
+  // Convert API student data to Student interface
+  const convertApiStudentToStudent = (apiStudent: ApiStudent): Student => {
+    // Get real projects for this student
+    const studentProjects = allProjects.filter(project => 
+      project.userName === apiStudent.fullName
+    );
+
+    return {
+      id: apiStudent.id.toString(),
+      fullName: apiStudent.fullName,
+      email: `${apiStudent.fullName.toLowerCase().replace(/\s+/g, '.')}@university.lk`,
+      phone: apiStudent.phoneNumber,
+      bio: apiStudent.bio || `${apiStudent.major || 'Computer Science'} student passionate about technology and innovation.`,
+      avatar: apiStudent.avatarUrl,
+      location: apiStudent.university ? `${apiStudent.university} Campus` : "Sri Lanka",
+      university: apiStudent.university || "University",
+      degree: apiStudent.major || "Computer Science",
+      yearOfStudy: apiStudent.yearOfStudy || "3rd Year",
+      careerPath: apiStudent.careerInterests?.[0] || "Software Development",
+      gpa: apiStudent.gpa,
+      skills: apiStudent.skills.map(skill => ({
+        name: skill,
+        level: 0, // Reset to zero for new students
+        category: 'programming' as const,
+        certifications: []
+      })),
+      achievements: [], // Empty for new students
+      projects: studentProjects, // Use real projects only
+      learningProgress: {
+        totalHours: 0, // Reset to zero
+        completedCourses: 0, // Reset to zero
+        inProgressCourses: 0, // Reset to zero
+        skillsAcquired: 0, // Reset to zero
+        projectsCompleted: studentProjects.length, // Use real project count only
+        certificationsEarned: 0, // Reset to zero
+        monthlyProgress: Array.from({ length: 6 }, (_, i) => ({
+          month: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"][i],
+          hours: 0 // Reset all monthly hours to zero
+        })),
+        learningStreak: 0, // Reset to zero
+        lastActiveDate: apiStudent.lastActivityDate || new Date().toISOString()
+      },
+      linkedinUrl: apiStudent.linkedinUrl,
+      githubUrl: apiStudent.githubUsername ? `https://github.com/${apiStudent.githubUsername}` : undefined,
+      portfolioUrl: apiStudent.portfolioUrl,
+      resumeUrl: undefined,
+      joinedDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
+      lastActive: apiStudent.lastActivityDate || new Date().toISOString(),
+      isAvailableForWork: Math.random() > 0.3, // 70% available
+      preferredJobTypes: ["Full-time", "Internship", "Part-time"],
+      expectedSalary: `LKR ${Math.floor(Math.random() * 50 + 50)},000 - ${Math.floor(Math.random() * 50 + 100)},000`,
+      rating: studentRatings[apiStudent.id.toString()] || 0, // Use real rating or 0 if no rating
+      totalViews: 0, // Reset to zero for new students
+      profileCompleteness: 0 // Reset to zero for new students
+    };
+  };
+
+  // Fetch ratings for all students
+  const fetchStudentRatings = async (studentIds: number[]) => {
+    try {
+      const ratingsMap: Record<string, number> = {};
+      
+      // Fetch rating stats for each student
+      const ratingPromises = studentIds.map(async (studentId) => {
+        try {
+          const response = await API.getStudentRatingStats(studentId);
+          if (response.success && response.data) {
+            ratingsMap[studentId.toString()] = response.data.averageRating || 0;
+          } else {
+            ratingsMap[studentId.toString()] = 0;
+          }
+        } catch (error) {
+          console.log(`No ratings found for student ${studentId}, defaulting to 0`);
+          ratingsMap[studentId.toString()] = 0;
+        }
+      });
+
+      await Promise.all(ratingPromises);
+      setStudentRatings(ratingsMap);
+    } catch (error) {
+      console.error('Error fetching student ratings:', error);
+      // If there's an error, set all ratings to 0
+      const ratingsMap: Record<string, number> = {};
+      studentIds.forEach(id => {
+        ratingsMap[id.toString()] = 0;
+      });
+      setStudentRatings(ratingsMap);
+    }
+  };
+
+  // Fetch students from API
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      const response = await API.get('/Profiles/students?page=1&pageSize=100');
+      
+      if (response.success && response.data) {
+        const studentProfiles = response.data as ApiStudent[];
+        setApiStudents(studentProfiles);
+        
+        // Fetch ratings for all students
+        const studentIds = studentProfiles.map(student => student.id);
+        await fetchStudentRatings(studentIds);
+        
+        toast({
+          title: "Students Loaded",
+          description: `Loaded ${studentProfiles.length} students from database`,
+          variant: "default"
+        });
+      } else {
+        // Show empty state if API returns no data
+        setStudents([]);
+        setApiStudents([]);
+        toast({
+          title: "No Students Found",
+          description: "No student profiles found in the database",
+          variant: "default"
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      // Show empty state on error
+      setStudents([]);
+      toast({
+        title: "Connection Error",
+        description: "Could not connect to server. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch students on component mount
+  useEffect(() => {
+    // Fetch projects first, then students (so student data can include project counts)
+    const loadData = async () => {
+      await fetchAllProjects();
+      await fetchStudents();
+    };
+    loadData();
+  }, []);
+
+  // Set up automatic refresh for real-time updates
+  useEffect(() => {
+    const intervalId = setInterval(async () => {
+      // Silently refresh projects every 30 seconds to keep data current
+      await fetchAllProjects();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // Transform API students to Student objects when both data sources are available
+  useEffect(() => {
+    if (apiStudents.length > 0 && allProjects.length >= 0) {
+      const transformedStudents = apiStudents.map(apiStudent => convertApiStudentToStudent(apiStudent));
+      setStudents(transformedStudents);
+    }
+  }, [apiStudents, allProjects]);
+
+  const fetchAllProjects = async () => {
+    try {
+      const response = await API.getAllProjects();
+      if (response.success && response.data) {
+        setAllProjects(response.data);
+        setLastUpdated(new Date());
+      }
+    } catch (error) {
+      console.error('Error fetching all projects:', error);
+      setAllProjects([]);
+    }
+  };
+
+  // Convert apiStudents to students whenever data or ratings change
+  useEffect(() => {
+    if (apiStudents.length > 0) {
+      const convertedStudents = apiStudents.map(convertApiStudentToStudent);
+      setStudents(convertedStudents);
+    }
+  }, [apiStudents, studentRatings]);
+
+  // Refresh students data
+  const refreshStudents = () => {
+    fetchStudents();
+  };
+
+  // Refresh all data (students and projects)
+  const refreshAllData = async () => {
+    await fetchAllProjects();
+    await fetchStudents();
+  };
 
   // Filter students based on search and filters
   const filteredStudents = students.filter(student => {
@@ -409,10 +363,30 @@ const StudentBrowser = () => {
     return matchesSearch && matchesCareerPath && matchesYear && matchesLocation;
   });
 
-  const handleStudentSelect = (studentId: string) => {
-    const student = students.find(s => s.id === studentId);
+  const fetchStudentProjects = async (studentId: string | number) => {
+    try {
+      const response = await API.getAllProjects(); // Get all projects first
+      if (response.success && response.data) {
+        // Filter projects by student (matching userName with student's fullName)
+        const student = students.find(s => s.id === String(studentId));
+        if (student) {
+          const studentProjects = response.data.filter((project: Project) => 
+            project.userName === student.fullName
+          );
+          setStudentProjects(studentProjects);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching student projects:', error);
+      setStudentProjects([]);
+    }
+  };
+
+  const handleStudentSelect = (studentId: string | number) => {
+    const student = students.find(s => s.id === String(studentId));
     if (student) {
       setSelectedStudent(student);
+      fetchStudentProjects(studentId); // Fetch real projects for this student
     }
   };
 
@@ -441,10 +415,27 @@ const StudentBrowser = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold gradient-text mb-2">Student Talent Hub</h1>
-        <p className="text-muted-foreground">
-          Discover and connect with skilled ICT students ready to contribute to your organization
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold gradient-text mb-2">Student Talent Hub</h1>
+            <p className="text-muted-foreground">
+              Discover and connect with skilled ICT students ready to contribute to your organization
+            </p>
+          </div>
+          <Button 
+            onClick={refreshAllData} 
+            variant="outline" 
+            size="sm"
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4 mr-2" />
+            )}
+            Refresh All Data
+          </Button>
+        </div>
       </div>
 
       {/* Main Navigation Tabs */}
@@ -519,9 +510,14 @@ const StudentBrowser = () => {
 
           {/* Results Count */}
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Showing {filteredStudents.length} of {students.length} students
-            </p>
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Showing {filteredStudents.length} of {students.length} students
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Last updated: {lastUpdated.toLocaleTimeString()}
+              </p>
+            </div>
             <Button variant="outline" size="sm" onClick={() => setActiveView("leaderboard")}>
               <BarChart3 className="w-4 h-4 mr-1" />
               View Rankings
@@ -529,8 +525,36 @@ const StudentBrowser = () => {
           </div>
 
           {/* Student Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredStudents.map((student) => (
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Card key={index} className="glass-card">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-muted rounded-full animate-pulse"></div>
+                        <div>
+                          <div className="h-5 w-32 bg-muted rounded animate-pulse mb-2"></div>
+                          <div className="h-4 w-24 bg-muted rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="h-4 w-full bg-muted rounded animate-pulse"></div>
+                    <div className="h-4 w-3/4 bg-muted rounded animate-pulse"></div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="h-8 bg-muted rounded animate-pulse"></div>
+                      <div className="h-8 bg-muted rounded animate-pulse"></div>
+                      <div className="h-8 bg-muted rounded animate-pulse"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredStudents.map((student) => (
           <Card key={student.id} className="glass-card hover:shadow-lg transition-all duration-300 group">
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
@@ -551,7 +575,7 @@ const StudentBrowser = () => {
                 </div>
                 <div className="flex items-center space-x-1">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm font-medium">{student.rating}</span>
+                  <span className="text-sm font-medium">{student.rating.toFixed(1)}</span>
                 </div>
               </div>
             </CardHeader>
@@ -606,6 +630,38 @@ const StudentBrowser = () => {
                 </div>
               </div>
 
+              {/* Social Links */}
+              <div className="flex justify-center space-x-2">
+                {student.linkedinUrl && (
+                  <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                    <a href={student.linkedinUrl} target="_blank" rel="noopener noreferrer" title="LinkedIn Profile">
+                      <Linkedin className="w-4 h-4" />
+                    </a>
+                  </Button>
+                )}
+                {student.githubUrl && (
+                  <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                    <a href={student.githubUrl} target="_blank" rel="noopener noreferrer" title="GitHub Profile">
+                      <Github className="w-4 h-4" />
+                    </a>
+                  </Button>
+                )}
+                {student.portfolioUrl && (
+                  <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                    <a href={student.portfolioUrl} target="_blank" rel="noopener noreferrer" title="Portfolio">
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </Button>
+                )}
+                {student.email && (
+                  <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                    <a href={`mailto:${student.email}`} title="Send Email">
+                      <Mail className="w-4 h-4" />
+                    </a>
+                  </Button>
+                )}
+              </div>
+
               {/* Action Buttons */}
               <div className="flex space-x-2 pt-2">
                 <Dialog>
@@ -650,7 +706,7 @@ const StudentBrowser = () => {
                             <div className="flex items-center space-x-4">
                               <div className="flex items-center space-x-1">
                                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                <span className="font-medium">{selectedStudent.rating}/5.0</span>
+                                <span className="font-medium">{selectedStudent.rating.toFixed(1)}/5.0</span>
                               </div>
                               <Badge variant={selectedStudent.isAvailableForWork ? "default" : "secondary"}>
                                 {selectedStudent.isAvailableForWork ? "Available for Work" : "Not Available"}
@@ -716,11 +772,12 @@ const StudentBrowser = () => {
 
                         {/* Detailed Tabs */}
                         <Tabs defaultValue="overview" className="w-full">
-                          <TabsList className="grid w-full grid-cols-4">
+                          <TabsList className="grid w-full grid-cols-5">
                             <TabsTrigger value="overview">Overview</TabsTrigger>
                             <TabsTrigger value="skills">Skills & Progress</TabsTrigger>
                             <TabsTrigger value="achievements">Achievements</TabsTrigger>
                             <TabsTrigger value="projects">Projects</TabsTrigger>
+                            <TabsTrigger value="ratings">Expert Ratings</TabsTrigger>
                           </TabsList>
 
                           <TabsContent value="overview" className="space-y-6">
@@ -878,7 +935,7 @@ const StudentBrowser = () => {
                                         </p>
                                         <div className="flex items-center justify-between mt-2">
                                           <span className="text-xs text-muted-foreground">
-                                            {achievement.issuer} • {new Date(achievement.date).toLocaleDateString()}
+                                            {achievement.issuer} â€¢ {new Date(achievement.date).toLocaleDateString()}
                                           </span>
                                           {achievement.credentialUrl && (
                                             <Button variant="ghost" size="sm" asChild>
@@ -904,9 +961,9 @@ const StudentBrowser = () => {
                                 {selectedStudent.projects.map((project) => (
                                   <Card key={project.id} className="p-6">
                                     <div className="flex items-start space-x-4">
-                                      {project.image && (
+                                      {project.imageUrls && project.imageUrls[0] && (
                                         <img 
-                                          src={project.image} 
+                                          src={project.imageUrls[0]} 
                                           alt={project.title}
                                           className="w-24 h-16 object-cover rounded-lg"
                                         />
@@ -914,23 +971,24 @@ const StudentBrowser = () => {
                                       <div className="flex-1">
                                         <div className="flex items-center justify-between">
                                           <h4 className="font-semibold text-lg">{project.title}</h4>
-                                          <Badge variant="outline" className="capitalize">
-                                            {project.complexity}
-                                          </Badge>
                                         </div>
-                                        <p className="text-muted-foreground mt-2">
-                                          {project.description}
-                                        </p>
-                                        <div className="flex flex-wrap gap-1 mt-3">
-                                          {project.technologies.map((tech) => (
-                                            <Badge key={tech} variant="secondary" className="text-xs">
-                                              {tech}
-                                            </Badge>
-                                          ))}
-                                        </div>
+                                        {project.description && (
+                                          <p className="text-muted-foreground mt-2">
+                                            {project.description}
+                                          </p>
+                                        )}
+                                        {project.technologies && project.technologies.length > 0 && (
+                                          <div className="flex flex-wrap gap-1 mt-3">
+                                            {project.technologies.map((tech) => (
+                                              <Badge key={tech} variant="secondary" className="text-xs">
+                                                {tech}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        )}
                                         <div className="flex items-center space-x-4 mt-4">
                                           <span className="text-sm text-muted-foreground">
-                                            Completed: {new Date(project.completedDate).toLocaleDateString()}
+                                            Created: {new Date(project.createdAt).toLocaleDateString()}
                                           </span>
                                           <div className="flex space-x-2">
                                             {project.githubUrl && (
@@ -941,9 +999,9 @@ const StudentBrowser = () => {
                                                 </a>
                                               </Button>
                                             )}
-                                            {project.liveUrl && (
+                                            {project.projectUrl && (
                                               <Button variant="ghost" size="sm" asChild>
-                                                <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
+                                                <a href={project.projectUrl} target="_blank" rel="noopener noreferrer">
                                                   <ExternalLink className="w-4 h-4 mr-1" />
                                                   Live Demo
                                                 </a>
@@ -957,6 +1015,14 @@ const StudentBrowser = () => {
                                 ))}
                               </div>
                             </div>
+                          </TabsContent>
+
+                          <TabsContent value="ratings" className="space-y-4">
+                            <StudentRating 
+                              studentId={parseInt(selectedStudent.id)} 
+                              studentName={selectedStudent.fullName}
+                              isExpertView={true}
+                            />
                           </TabsContent>
                         </Tabs>
                       </div>
@@ -972,10 +1038,11 @@ const StudentBrowser = () => {
             </CardContent>
           </Card>
         ))}
-      </div>
+            </div>
+          )}
 
           {/* No Results */}
-          {filteredStudents.length === 0 && (
+          {!loading && filteredStudents.length === 0 && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-8 h-8 text-muted-foreground" />
@@ -989,7 +1056,7 @@ const StudentBrowser = () => {
         </TabsContent>
 
         <TabsContent value="leaderboard">
-          <Leaderboard onStudentSelect={handleStudentSelect} />
+          <RealTimeLeaderboard onStudentSelect={handleStudentSelect} showMyRank={false} />
         </TabsContent>
       </Tabs>
 
@@ -1030,7 +1097,7 @@ const StudentBrowser = () => {
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-1">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium">{selectedStudent.rating}/5.0</span>
+                      <span className="font-medium">{selectedStudent.rating.toFixed(1)}/5.0</span>
                     </div>
                     <Badge variant={selectedStudent.isAvailableForWork ? "default" : "secondary"}>
                       {selectedStudent.isAvailableForWork ? "Available for Work" : "Not Available"}
@@ -1096,11 +1163,12 @@ const StudentBrowser = () => {
 
               {/* Detailed Tabs */}
               <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
                   <TabsTrigger value="skills">Skills & Progress</TabsTrigger>
                   <TabsTrigger value="achievements">Achievements</TabsTrigger>
                   <TabsTrigger value="projects">Projects</TabsTrigger>
+                  <TabsTrigger value="ratings">Expert Ratings</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6">
@@ -1258,7 +1326,7 @@ const StudentBrowser = () => {
                               </p>
                               <div className="flex items-center justify-between mt-2">
                                 <span className="text-xs text-muted-foreground">
-                                  {achievement.issuer} • {new Date(achievement.date).toLocaleDateString()}
+                                  {achievement.issuer} â€¢ {new Date(achievement.date).toLocaleDateString()}
                                 </span>
                                 {achievement.credentialUrl && (
                                   <Button variant="ghost" size="sm" asChild>
@@ -1284,9 +1352,9 @@ const StudentBrowser = () => {
                       {selectedStudent.projects.map((project) => (
                         <Card key={project.id} className="p-6">
                           <div className="flex items-start space-x-4">
-                            {project.image && (
+                            {project.imageUrls && project.imageUrls[0] && (
                               <img 
-                                src={project.image} 
+                                src={project.imageUrls[0]} 
                                 alt={project.title}
                                 className="w-24 h-16 object-cover rounded-lg"
                               />
@@ -1294,23 +1362,24 @@ const StudentBrowser = () => {
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
                                 <h4 className="font-semibold text-lg">{project.title}</h4>
-                                <Badge variant="outline" className="capitalize">
-                                  {project.complexity}
-                                </Badge>
                               </div>
-                              <p className="text-muted-foreground mt-2">
-                                {project.description}
-                              </p>
-                              <div className="flex flex-wrap gap-1 mt-3">
-                                {project.technologies.map((tech) => (
-                                  <Badge key={tech} variant="secondary" className="text-xs">
-                                    {tech}
-                                  </Badge>
-                                ))}
-                              </div>
+                              {project.description && (
+                                <p className="text-muted-foreground mt-2">
+                                  {project.description}
+                                </p>
+                              )}
+                              {project.technologies && project.technologies.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-3">
+                                  {project.technologies.map((tech) => (
+                                    <Badge key={tech} variant="secondary" className="text-xs">
+                                      {tech}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
                               <div className="flex items-center space-x-4 mt-4">
                                 <span className="text-sm text-muted-foreground">
-                                  Completed: {new Date(project.completedDate).toLocaleDateString()}
+                                  Created: {new Date(project.createdAt).toLocaleDateString()}
                                 </span>
                                 <div className="flex space-x-2">
                                   {project.githubUrl && (
@@ -1321,9 +1390,9 @@ const StudentBrowser = () => {
                                       </a>
                                     </Button>
                                   )}
-                                  {project.liveUrl && (
+                                  {project.projectUrl && (
                                     <Button variant="ghost" size="sm" asChild>
-                                      <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
+                                      <a href={project.projectUrl} target="_blank" rel="noopener noreferrer">
                                         <ExternalLink className="w-4 h-4 mr-1" />
                                         Live Demo
                                       </a>
@@ -1338,6 +1407,14 @@ const StudentBrowser = () => {
                     </div>
                   </div>
                 </TabsContent>
+
+                <TabsContent value="ratings" className="space-y-4">
+                  <StudentRating 
+                    studentId={parseInt(selectedStudent.id)}
+                    studentName={selectedStudent.fullName}
+                    isExpertView={true}
+                  />
+                </TabsContent>
               </Tabs>
             </div>
           </DialogContent>
@@ -1348,3 +1425,4 @@ const StudentBrowser = () => {
 };
 
 export default StudentBrowser;
+
