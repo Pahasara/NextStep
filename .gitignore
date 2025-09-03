@@ -307,7 +307,6 @@ logs
 # ============================================
 
 # Temporary files
-*.http
 *.tmp
 *.temp
 *.bak
