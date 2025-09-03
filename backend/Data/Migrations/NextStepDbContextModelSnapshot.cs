@@ -17,6 +17,72 @@ namespace NextStep.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.7");
 
+            modelBuilder.Entity("NextStepBackend.Models.Achievement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("BadgeColor")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConditionMetadata")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConditionType")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ConditionValue")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("datetime('now')");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IconName")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Rarity")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("datetime('now')");
+
+                    b.Property<int>("XpReward")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Achievements");
+                });
+
             modelBuilder.Entity("NextStepBackend.Models.Course", b =>
                 {
                     b.Property<int>("Id")
@@ -68,10 +134,51 @@ namespace NextStep.Data.Migrations
                     b.ToTable("Courses");
                 });
 
+            modelBuilder.Entity("NextStepBackend.Models.LeaderboardActivity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ActivityDescription")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ActivityType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("datetime('now')");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PointsEarned")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("UserId", "ActivityType");
+
+                    b.ToTable("LeaderboardActivities");
+                });
+
             modelBuilder.Entity("NextStepBackend.Models.Profile", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AchievementsEarned")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AvatarUrl")
@@ -97,6 +204,12 @@ namespace NextStep.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("CompetitionWins")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CoursesCompleted")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Experience")
                         .HasMaxLength(20)
                         .HasColumnType("TEXT");
@@ -109,6 +222,12 @@ namespace NextStep.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("LastActivityDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("LearningHours")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Level")
                         .HasColumnType("INTEGER");
 
@@ -119,6 +238,12 @@ namespace NextStep.Data.Migrations
                     b.Property<string>("Major")
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
+
+                    b.Property<double>("MentorshipRating")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("MonthlyGrowthPercentage")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Points")
                         .HasColumnType("INTEGER");
@@ -131,8 +256,20 @@ namespace NextStep.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("ProfileViews")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ProjectsSubmitted")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Skills")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("SkillsAcquired")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Streak")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("University")
                         .HasMaxLength(100)
@@ -199,6 +336,48 @@ namespace NextStep.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("NextStepBackend.Models.StudentRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ExpertUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StudentUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("ExpertUserId");
+
+                    b.HasIndex("StudentUserId");
+
+                    b.HasIndex("StudentUserId", "ExpertUserId", "Category");
+
+                    b.ToTable("StudentRatings");
                 });
 
             modelBuilder.Entity("NextStepBackend.Models.Subscription", b =>
@@ -284,6 +463,40 @@ namespace NextStep.Data.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("NextStepBackend.Models.UserAchievement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AchievementId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("EarnedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("datetime('now')");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("XpEarned")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AchievementId");
+
+                    b.HasIndex("UserId", "AchievementId")
+                        .IsUnique();
+
+                    b.ToTable("UserAchievements");
+                });
+
             modelBuilder.Entity("NextStepBackend.Models.UserCourse", b =>
                 {
                     b.Property<int>("Id")
@@ -320,6 +533,17 @@ namespace NextStep.Data.Migrations
                     b.ToTable("UserCourses");
                 });
 
+            modelBuilder.Entity("NextStepBackend.Models.LeaderboardActivity", b =>
+                {
+                    b.HasOne("NextStepBackend.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("NextStepBackend.Models.Profile", b =>
                 {
                     b.HasOne("NextStepBackend.Models.User", "User")
@@ -338,6 +562,44 @@ namespace NextStep.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("NextStepBackend.Models.StudentRating", b =>
+                {
+                    b.HasOne("NextStepBackend.Models.User", "Expert")
+                        .WithMany()
+                        .HasForeignKey("ExpertUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NextStepBackend.Models.User", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Expert");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("NextStepBackend.Models.UserAchievement", b =>
+                {
+                    b.HasOne("NextStepBackend.Models.Achievement", "Achievement")
+                        .WithMany("UserAchievements")
+                        .HasForeignKey("AchievementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NextStepBackend.Models.User", "User")
+                        .WithMany("UserAchievements")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Achievement");
 
                     b.Navigation("User");
                 });
@@ -361,6 +623,11 @@ namespace NextStep.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("NextStepBackend.Models.Achievement", b =>
+                {
+                    b.Navigation("UserAchievements");
+                });
+
             modelBuilder.Entity("NextStepBackend.Models.Course", b =>
                 {
                     b.Navigation("UserCourses");
@@ -371,6 +638,8 @@ namespace NextStep.Data.Migrations
                     b.Navigation("Profile");
 
                     b.Navigation("Projects");
+
+                    b.Navigation("UserAchievements");
 
                     b.Navigation("UserCourses");
                 });

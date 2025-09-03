@@ -202,6 +202,20 @@ class ApiService {
     return this.handleResponse<any[]>(response);
   }
 
+  async getAllProjects(): Promise<ApiResponse<any[]>> {
+    const response = await fetch(`${API_BASE_URL}/Projects/all`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<any[]>(response);
+  }
+
+  async getMyProjects(): Promise<ApiResponse<any[]>> {
+    const response = await fetch(`${API_BASE_URL}/Projects/my`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<any[]>(response);
+  }
+
   async getProject(projectId: number): Promise<ApiResponse<any>> {
     const response = await fetch(`${API_BASE_URL}/Projects/${projectId}`, {
       headers: this.getAuthHeaders(),
@@ -251,6 +265,38 @@ class ApiService {
 
   async getMyRank(): Promise<ApiResponse<any>> {
     const response = await fetch(`${API_BASE_URL}/Leaderboard/my-rank`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<any>(response);
+  }
+
+  async logActivity(activityData: {
+    activityType: string;
+    description?: string;
+    points: number;
+    metadata?: string;
+  }): Promise<ApiResponse<any>> {
+    const response = await fetch(`${API_BASE_URL}/Leaderboard/activity`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(activityData),
+    });
+    return this.handleResponse<any>(response);
+  }
+
+  async getMyActivities(page = 1, pageSize = 20): Promise<ApiResponse<any[]>> {
+    const response = await fetch(
+      `${API_BASE_URL}/Leaderboard/activities?page=${page}&pageSize=${pageSize}`,
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
+    return this.handleResponse<any[]>(response);
+  }
+
+  async incrementProfileView(userId: number): Promise<ApiResponse<any>> {
+    const response = await fetch(`${API_BASE_URL}/Leaderboard/profile-view/${userId}`, {
+      method: "POST",
       headers: this.getAuthHeaders(),
     });
     return this.handleResponse<any>(response);
@@ -314,6 +360,110 @@ class ApiService {
       headers: this.getAuthHeaders(),
     });
     return this.handleResponse<T>(response);
+  }
+
+  // Rating endpoints
+  async createRating(data: any): Promise<ApiResponse<any>> {
+    const response = await fetch(`${API_BASE_URL}/Ratings`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return this.handleResponse<any>(response);
+  }
+
+  async updateRating(ratingId: number, data: any): Promise<ApiResponse<any>> {
+    const response = await fetch(`${API_BASE_URL}/Ratings/${ratingId}`, {
+      method: "PUT",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return this.handleResponse<any>(response);
+  }
+
+  async deleteRating(ratingId: number): Promise<ApiResponse<any>> {
+    const response = await fetch(`${API_BASE_URL}/Ratings/${ratingId}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<any>(response);
+  }
+
+  async getStudentRatings(studentId: number, page = 1, pageSize = 20): Promise<ApiResponse<any[]>> {
+    const response = await fetch(
+      `${API_BASE_URL}/Ratings/student/${studentId}?page=${page}&pageSize=${pageSize}`,
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
+    return this.handleResponse<any[]>(response);
+  }
+
+  async getStudentRatingStats(studentId: number): Promise<ApiResponse<any>> {
+    const response = await fetch(`${API_BASE_URL}/Ratings/student/${studentId}/stats`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<any>(response);
+  }
+
+  async getExpertRatingForStudent(studentId: number, category?: string): Promise<ApiResponse<any>> {
+    const url = category
+      ? `${API_BASE_URL}/Ratings/expert/student/${studentId}?category=${encodeURIComponent(category)}`
+      : `${API_BASE_URL}/Ratings/expert/student/${studentId}`;
+    
+    const response = await fetch(url, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<any>(response);
+  }
+
+  async getMyRatings(page = 1, pageSize = 20): Promise<ApiResponse<any[]>> {
+    const response = await fetch(
+      `${API_BASE_URL}/Ratings/expert/my-ratings?page=${page}&pageSize=${pageSize}`,
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
+    return this.handleResponse<any[]>(response);
+  }
+
+  // Achievement endpoints
+  async getAchievements(): Promise<ApiResponse<any[]>> {
+    const response = await fetch(`${API_BASE_URL}/Achievements`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<any[]>(response);
+  }
+
+  async getMyAchievements(): Promise<ApiResponse<any>> {
+    const response = await fetch(`${API_BASE_URL}/Achievements/my`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<any>(response);
+  }
+
+  async getUserAchievements(userId: number): Promise<ApiResponse<any[]>> {
+    const response = await fetch(`${API_BASE_URL}/Achievements/user/${userId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<any[]>(response);
+  }
+
+  async checkAndAwardAchievements(): Promise<ApiResponse<any[]>> {
+    const response = await fetch(`${API_BASE_URL}/Achievements/check-and-award`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<any[]>(response);
+  }
+
+  async manualAwardAchievement(achievementId: number, notes?: string): Promise<ApiResponse<any>> {
+    const response = await fetch(`${API_BASE_URL}/Achievements/manual-award`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ achievementId, notes }),
+    });
+    return this.handleResponse<any>(response);
   }
 }
 

@@ -29,4 +29,5 @@ public class User
     public Profile? Profile { get; set; }
     public ICollection<UserCourse> UserCourses { get; set; } = new List<UserCourse>();
     public ICollection<Project> Projects { get; set; } = new List<Project>();
+    public ICollection<UserAchievement> UserAchievements { get; set; } = new List<UserAchievement>();
 }

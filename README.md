@@ -1,5 +1,7 @@
 # 🚀 NextStep - ICT Career Pathway Discovery Platform
 
+http://nextstep-frontend-tharindu.s3-website-us-east-1.amazonaws.com/
+
 <div align="center">
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React" />
   <img src="https://img.shields.io/badge/.NET-9.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt=".NET" />

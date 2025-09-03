@@ -45,6 +45,8 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<IRatingService, RatingService>();
+builder.Services.AddScoped<IAchievementService, AchievementService>();
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -52,18 +54,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins(
-                "http://localhost:8080", 
-                "http://localhost:3000", 
-                "http://localhost:5173",
-                "http://frontend:8080",  // Container-to-container communication
-                "http://nextstep-frontend:8080",  // Container name communication
-                "https://nextstep-frontend.s3.amazonaws.com",  // Your S3 bucket URL
-                "https://nextstep-frontend.s3.us-east-1.amazonaws.com",  // Your S3 bucket URL with region
-                "http://nextstep-frontend.s3-website-us-east-1.amazonaws.com",  // S3 website URL
-                "https://nextstep-frontend.s3-website-us-east-1.amazonaws.com",  // S3 website URL (HTTPS)
-                "https://your-custom-domain.com",  // Replace with your CloudFront or custom domain if applicable
-                "http://44.208.0.103:7010",  // Your EC2 public IP
-                "https://44.208.0.103:7010"  // If using HTTPS
+                "http://localhost:8080",
+                "https://nextstep-frontend-tharindu.s3-website-us-east-1.amazonaws.com"
             )
               .AllowAnyHeader()
               .AllowAnyMethod()

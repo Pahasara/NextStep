@@ -54,8 +54,20 @@ const Navbar = () => {
     { name: "Partners", href: "/partners" },
     { name: "Careers", href: "/careers" },
     { name: "Contact", href: "/contact" },
-    { name: "Help", href: "/help" }
+    { name: "Help", href: "/help" },
   ];
+
+  // Add Dashboard for students and Students for industry experts
+  const userSpecificItems = user?.role === 'student' 
+    ? [
+        { name: "Dashboard", href: "/dashboard" },
+        { name: "Projects", href: "/projects" }
+      ]
+    : user?.role === 'industry_expert' 
+    ? [{ name: "Students", href: "/students" }]
+    : [];
+
+  const allNavItems = [...navItems, ...userSpecificItems];
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -78,7 +90,7 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
+            {allNavItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
@@ -191,7 +203,7 @@ const Navbar = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-border/50 py-4">
             <div className="space-y-4">
-              {navItems.map((item) => (
+              {allNavItems.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}

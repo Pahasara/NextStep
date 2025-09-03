@@ -51,93 +51,93 @@ const CourseAnalytics = ({ userId, careerPath }: CourseAnalyticsProps) => {
   const [timeFrame, setTimeFrame] = useState<'week' | 'month' | 'year'>('month');
   const [loading, setLoading] = useState(false);
 
-  // Mock analytics data
+  // Analytics data for new students - all reset to zero
   const analyticsData = {
     overview: {
-      totalCourses: 8,
-      completedCourses: 3,
-      inProgressCourses: 2,
-      totalHours: 142,
-      averageRating: 4.6,
-      currentStreak: 12,
-      longestStreak: 28,
-      skillsAcquired: 15
+      totalCourses: 0, // Reset to 0 for new students
+      completedCourses: 0, // Reset to 0 for new students
+      inProgressCourses: 0, // Reset to 0 for new students
+      totalHours: 0, // Reset to 0 for new students
+      averageRating: 0, // Reset to 0 for new students
+      currentStreak: 0, // Reset to 0 for new students
+      longestStreak: 0, // Reset to 0 for new students
+      skillsAcquired: 0 // Reset to 0 for new students
     },
     
     progressTrend: [
       { date: '2024-01-01', courses: 0, hours: 0, progress: 0 },
-      { date: '2024-01-08', courses: 1, hours: 8, progress: 12 },
-      { date: '2024-01-15', courses: 1, hours: 16, progress: 25 },
-      { date: '2024-01-22', courses: 2, hours: 28, progress: 40 },
-      { date: '2024-01-29', courses: 2, hours: 42, progress: 55 },
-      { date: '2024-02-05', courses: 3, hours: 58, progress: 68 },
-      { date: '2024-02-12', courses: 3, hours: 75, progress: 78 },
-      { date: '2024-02-19', courses: 3, hours: 92, progress: 85 },
-      { date: '2024-02-26', courses: 3, hours: 108, progress: 90 }
+      { date: '2024-01-08', courses: 0, hours: 0, progress: 0 },
+      { date: '2024-01-15', courses: 0, hours: 0, progress: 0 },
+      { date: '2024-01-22', courses: 0, hours: 0, progress: 0 },
+      { date: '2024-01-29', courses: 0, hours: 0, progress: 0 },
+      { date: '2024-02-05', courses: 0, hours: 0, progress: 0 },
+      { date: '2024-02-12', courses: 0, hours: 0, progress: 0 },
+      { date: '2024-02-19', courses: 0, hours: 0, progress: 0 },
+      { date: '2024-02-26', courses: 0, hours: 0, progress: 0 }
     ],
 
     studyTime: [
-      { day: 'Mon', morning: 1.5, afternoon: 2.0, evening: 1.2 },
-      { day: 'Tue', morning: 0.8, afternoon: 1.5, evening: 2.3 },
-      { day: 'Wed', morning: 2.1, afternoon: 0.5, evening: 1.8 },
-      { day: 'Thu', morning: 1.2, afternoon: 2.8, evening: 1.0 },
-      { day: 'Fri', morning: 0.9, afternoon: 2.2, evening: 2.5 },
-      { day: 'Sat', morning: 3.0, afternoon: 1.8, evening: 0.8 },
-      { day: 'Sun', morning: 2.5, afternoon: 1.2, evening: 1.5 }
+      { day: 'Mon', morning: 0, afternoon: 0, evening: 0 },
+      { day: 'Tue', morning: 0, afternoon: 0, evening: 0 },
+      { day: 'Wed', morning: 0, afternoon: 0, evening: 0 },
+      { day: 'Thu', morning: 0, afternoon: 0, evening: 0 },
+      { day: 'Fri', morning: 0, afternoon: 0, evening: 0 },
+      { day: 'Sat', morning: 0, afternoon: 0, evening: 0 },
+      { day: 'Sun', morning: 0, afternoon: 0, evening: 0 }
     ],
 
     skillsProgress: [
-      { skill: 'React', beginner: 100, intermediate: 80, advanced: 45 },
-      { skill: 'JavaScript', beginner: 100, intermediate: 95, advanced: 70 },
-      { skill: 'Node.js', beginner: 85, intermediate: 60, advanced: 25 },
-      { skill: 'CSS', beginner: 100, intermediate: 88, advanced: 65 },
-      { skill: 'Database', beginner: 90, intermediate: 45, advanced: 20 },
-      { skill: 'Git', beginner: 100, intermediate: 85, advanced: 60 }
+      { skill: 'React', beginner: 0, intermediate: 0, advanced: 0 },
+      { skill: 'JavaScript', beginner: 0, intermediate: 0, advanced: 0 },
+      { skill: 'Node.js', beginner: 0, intermediate: 0, advanced: 0 },
+      { skill: 'CSS', beginner: 0, intermediate: 0, advanced: 0 },
+      { skill: 'Database', beginner: 0, intermediate: 0, advanced: 0 },
+      { skill: 'Git', beginner: 0, intermediate: 0, advanced: 0 }
     ],
 
     learningPattern: [
-      { name: 'Video Lessons', value: 45, color: '#3B82F6' },
-      { name: 'Hands-on Practice', value: 30, color: '#10B981' },
-      { name: 'Reading', value: 15, color: '#F59E0B' },
-      { name: 'Quizzes', value: 10, color: '#8B5CF6' }
+      { name: 'Video Lessons', value: 0, color: '#3B82F6' },
+      { name: 'Hands-on Practice', value: 0, color: '#10B981' },
+      { name: 'Reading', value: 0, color: '#F59E0B' },
+      { name: 'Quizzes', value: 0, color: '#8B5CF6' }
     ],
 
     weeklyGoals: {
       coursesTarget: 1,
-      coursesCompleted: 0.8,
+      coursesCompleted: 0, // Reset to 0 for new students
       hoursTarget: 15,
-      hoursCompleted: 12,
+      hoursCompleted: 0, // Reset to 0 for new students
       projectsTarget: 1,
-      projectsCompleted: 1
+      projectsCompleted: 0 // Reset to 0 for new students
     },
 
     achievements: [
       {
         id: '1',
         title: 'Fast Learner',
-        description: 'Completed a course in record time',
+        description: 'Complete a course in record time',
         icon: Zap,
         color: 'text-yellow-500',
-        earned: true,
-        earnedDate: '2024-01-15'
+        earned: false, // Reset to not earned for new students
+        progress: 0 // Reset progress to 0
       },
       {
         id: '2',
         title: 'Perfect Week',
-        description: 'Met all learning goals for a week',
+        description: 'Meet all learning goals for a week',
         icon: Trophy,
         color: 'text-orange-500',
-        earned: true,
-        earnedDate: '2024-01-22'
+        earned: false, // Reset to not earned for new students
+        progress: 0 // Reset progress to 0
       },
       {
         id: '3',
         title: 'Streak Master',
-        description: 'Maintained 7-day learning streak',
+        description: 'Maintain 7-day learning streak',
         icon: Target,
         color: 'text-green-500',
-        earned: true,
-        earnedDate: '2024-02-01'
+        earned: false, // Reset to not earned for new students
+        progress: 0 // Reset progress to 0
       },
       {
         id: '4',
@@ -146,40 +146,11 @@ const CourseAnalytics = ({ userId, careerPath }: CourseAnalyticsProps) => {
         icon: Award,
         color: 'text-purple-500',
         earned: false,
-        progress: 60
+        progress: 0 // Reset progress to 0
       }
     ],
 
-    recentActivity: [
-      {
-        type: 'course_completed',
-        title: 'Completed React Fundamentals',
-        time: '2 hours ago',
-        icon: CheckCircle,
-        color: 'text-green-500'
-      },
-      {
-        type: 'module_completed',
-        title: 'Finished "State Management" module',
-        time: '5 hours ago',
-        icon: BookOpen,
-        color: 'text-blue-500'
-      },
-      {
-        type: 'quiz_passed',
-        title: 'Scored 95% on JavaScript Quiz',
-        time: '1 day ago',
-        icon: Star,
-        color: 'text-yellow-500'
-      },
-      {
-        type: 'project_submitted',
-        title: 'Submitted Todo App project',
-        time: '2 days ago',
-        icon: PlayCircle,
-        color: 'text-purple-500'
-      }
-    ]
+    recentActivity: [] // Empty activity for new students
   };
 
   const getTimeFrameData = () => {

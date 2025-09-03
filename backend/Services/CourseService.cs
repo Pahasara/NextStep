@@ -8,10 +8,12 @@ namespace NextStepBackend.Services;
 public class CourseService : ICourseService
 {
     private readonly NextStepDbContext _context;
+    private readonly ILeaderboardService _leaderboardService;
 
-    public CourseService(NextStepDbContext context)
+    public CourseService(NextStepDbContext context, ILeaderboardService leaderboardService)
     {
         _context = context;
+        _leaderboardService = leaderboardService;
     }
 
     public async Task<ApiResponse<List<CourseDto>>> GetCoursesAsync(int userId, string? level = null, string? category = null)
@@ -237,16 +239,22 @@ public class CourseService : ICourseService
             userCourse.Progress = 100;
             userCourse.CompletedAt = DateTime.UtcNow;
 
-            // Update user points and level
-            var profile = await _context.Profiles.FirstOrDefaultAsync(p => p.UserId == userId);
-            if (profile != null)
-            {
-                profile.Points += userCourse.Course.XpPoints;
-                profile.Level = CalculateLevel(profile.Points);
-                profile.UpdatedAt = DateTime.UtcNow;
-            }
-
             await _context.SaveChangesAsync();
+
+            // Log the activity for leaderboard
+            var metadata = System.Text.Json.JsonSerializer.Serialize(new 
+            { 
+                CourseId = courseId, 
+                CourseName = userCourse.Course.Title,
+                LearningHours = userCourse.Course.EstimatedHours 
+            });
+
+            await _leaderboardService.LogActivityAsync(
+                userId, 
+                "course_completed", 
+                $"Completed course: {userCourse.Course.Title}", 
+                userCourse.Course.XpPoints,
+                metadata);
 
             return new ApiResponse<string>
             {
